@@ -1,41 +1,53 @@
 import React from 'react';
 import ReactDom from 'react-dom';
 import PropTypes from 'prop-types';
-import { createStore } from 'redux';
+import {createStore} from 'redux';
 import './styles.css';
-import { timerReducer, changeSeconds, restart } from './timerReducer.js';
-import RoundButton, { RESTART_SIGN } from './components/RoundButton';
+import {timerReducer, changeSeconds, restart} from './timerReducer.js';
+import RoundButton, {RESTART_SIGN} from './components/RoundButton';
 import Timer from './components/Timer';
 import Sandglass from './components/Sandglass';
 
-// const appStore = ...;
+const appStore = createStore(timerReducer);
 
 class App extends React.Component {
-  state = { seconds: 15 };
+    state = this.props.store.getState();
 
-  handleDecrease = () => {
-    this.setState(prevState => ({ seconds: prevState.seconds - 1 }));
-  };
+    handleDecrease = () => {
+        this.props.store.dispatch({type: 'CHANGE_SECONDS', seconds: -1});
+    };
 
-  handleIncrease = () => {
-    this.setState(prevState => ({ seconds: prevState.seconds + 1 }));
-  };
+    handleIncrease = () => {
+        this.props.store.dispatch({type: 'CHANGE_SECONDS', seconds: +1});
+    };
 
-  render() {
-    return (
-      <div className="app">
-        <Timer
-          seconds={this.state.seconds}
-          onDecrease={this.handleDecrease}
-          onIncrease={this.handleIncrease}
-        />
-      </div>
-    );
-  }
+    componentDidMount() {
+        this.unsubscribe = this.props.store.subscribe(() => {
+            // задается новое состояние компонента и происходит перерисовка
+            this.setState(this.props.store.getState());
+        });
+    }
+
+    componentWillUnmount() {
+        this.unsubscribe && this.unsubscribe();
+    }
+
+    render() {
+
+        return (
+            <div className="app">
+                <Timer
+                    seconds={this.state.seconds}
+                    onDecrease={this.handleDecrease}
+                    onIncrease={this.handleIncrease}
+                />
+            </div>
+        );
+    }
 }
 
 App.propTypes = {
-  //store: PropTypes.object.isRequired,
+    store: PropTypes.object.isRequired,
 };
 
-ReactDom.render(<App />, document.getElementById('app'));
+ReactDom.render(<App store={appStore}/>, document.getElementById('app'));
